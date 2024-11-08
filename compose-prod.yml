@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  sqlserver:
+    image: mysql
+    restart: unless-stopped
+    container_name: sqlserver
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_DATABASE: cardealerapp_prod
+    ports:
+      - "3307:3306"
+    networks:
+      - springboot-network
+
+  springboot-app:
+    image: car-dealer-app
+    container_name: car-dealer-app-prod
+    depends_on:
+      - sqlserver
+    restart: on-failure
+    build:
+      context: .
+    ports:
+      - "8686:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://sqlserver:3306/cardealerapp_prod?createDatabaseIfNotExist=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 1234
+      SERVER_PORT: 8080
+    networks:
+      - springboot-network
+
+networks:
+  springboot-network:
+    driver: bridge
