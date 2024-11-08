@@ -1,37 +1,42 @@
+# Specify the Docker Compose version to ensure compatibility
 version: '3.8'
 
 services:
+  # Define the SQL Server database service
   sqlserver:
-    image: mysql
+    image: mysql  # Use the official SQL image
     restart: unless-stopped
-    container_name: sqlserver
+    container_name: sqlserver  # Name the container for easier reference
     environment:
-      MYSQL_ROOT_PASSWORD: 1234
-      MYSQL_DATABASE: cardealerapp_dev
+      MYSQL_ROOT_PASSWORD: 1234  # Set the password for the root user
+      MYSQL_DATABASE: cardealerapp_dev # Set the database name
     ports:
-      - "3307:3306"
+      - "3307:3306"   # Expose SQL Server's default port for external access
     networks:
-      - springboot-network
+      - springboot-network # Attach this service to a custom network for internal communication
 
+  # Define the Spring Boot application service
   springboot-app-dev:
-    image: car-dealer-app
-    container_name: car-dealer-app-dev
+    image: car-dealer-app   # Use the locally built image named 'car-dealer-app'
+    container_name: car-dealer-app-dev  # Name the container for easy reference
     depends_on:
-      - sqlserver
+      - sqlserver    # Ensure the SQL Server container starts before the Car dealer app
     restart: on-failure
     build:
-      context: .
+      context: .     # Build context is the current directory, which contains the Dockerfile
     ports:
-      - "8484:8080"
+      - "8484:8080" # Expose port 8484 for external access to the application
     environment:
+      # Database connection properties for the Spring Boot application
       SPRING_DATASOURCE_URL: jdbc:mysql://sqlserver:3306/cardealerapp_dev?createDatabaseIfNotExist=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: 1234
       SERVER_PORT: 8080
       SPRING_PROFILES_ACTIVE: dev
     networks:
-      - springboot-network
+      - springboot-network   # Connect to the same network as SQL Server for easy communication
 
+# Define a custom Docker network to enable communication between containers
 networks:
   springboot-network:
-    driver: bridge
+    driver: bridge   # Use the bridge driver, which is suitable for inter-container communication
